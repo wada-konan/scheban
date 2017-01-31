@@ -18,7 +18,7 @@ except ImportError:
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = 'config/client_secret.json'
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 
 
@@ -60,7 +60,7 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
 
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
     print('Getting the upcoming 10 events')
     eventsResult = service.events().list(
         calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
@@ -74,5 +74,49 @@ def main():
         print(start, event['summary'])
 
 
+def get_upcoming_events(calendar_id='primary', max_results=10):
+    credentials = get_credentials()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+
+    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+    print('Getting the upcoming {} events'.format(max_results))
+    events_result = service.events().list(
+        calendarId=calendar_id, timeMin=now, maxResults=max_results, singleEvents=True,
+        orderBy='startTime').execute()
+    events = events_result.get('items', [])
+
+    if not events:
+        print('No upcoming events found.')
+        return []
+    else:
+        return events
+
+
+def extract_datetime(datetime_text):
+    ymd, time = datetime_text.split('T')
+    year, month, date = ymd.split('-')
+    hms, _ = time.split('+')
+    hour, minute, second = hms.split(':')
+    return year, month, date, hour, minute, second
+
+
+def events2text(calendar_id='primary', max_results=10):
+    events = get_upcoming_events(calendar_id, max_results)
+    text = ''
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        end = event['end'].get('dateTime', event['end'].get('date'))
+        summary = event['summary']
+        sy, smo, sd, sh, smi, ss = extract_datetime(start)
+        ey, emo, ed, eh, emi, es = extract_datetime(end)
+        text += '{}/{} {}:{}〜{}:{} {}\n'.format(smo, sd, sh, smi, eh, emi, summary)
+
+    return text
+
+
+
 if __name__ == '__main__':
-    main()
+    #main()
+    calendar_id = 'tdauvvfdl5rvamauvfg1hc555k@group.calendar.google.com'
+    get_upcoming_events(calendar_id=calendar_id)
