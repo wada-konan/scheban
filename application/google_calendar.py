@@ -78,16 +78,21 @@ def extract_datetime(datetime_text):
 def events2text(calendar_id='primary', max_results=10):
     events = get_upcoming_events(calendar_id, max_results)
     text = ''
+    early_event = None
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
         end = event['end'].get('dateTime', event['end'].get('date'))
         summary = event['summary']
         sy, smo, sd, sh, smi, ss = extract_datetime(start)
         ey, emo, ed, eh, emi, es = extract_datetime(end)
-        early_event = event
-        for event in events
-            if(early_event > event)
-        text += '{}/{} {}:{}〜 {}\n'.format(smo, sd, sh, smi, summary)
+        if early_event == None:
+            early_event = start
+        if early_event > start:
+                early_event = start
+        print(early_event)
+        y, mo, d, h, mi, s = extract_datetime(early_event)
+        h = str(int(h)-1)
+        text = '起きる時間は{}:{}'.format(h, mi)
 
     return text
 
